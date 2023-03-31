@@ -9,7 +9,7 @@
   <b>Figure 1:</b> Comparison of our proposed Directional Stimulus Prompting with the standard prompting method to use the LLM such as GPT-3 on the summarization task. Our DSP uses a tuneable policy LM to generate the stimulus (highlighted in orange color), which is keywords in this case, to guide the LLM on generating the desired summary (highlighted in blue color) with higher rouge scores or other measures like human preference. 
 </p>
 
-The policy LM can be trained through `supervised finetuning from annotated data (SFT)` and `reinforcement learning from offline and online rewards (RL)` to explore directional stimulus that better aligns LLMs with human preferences. This framework is flexibly applicable to various LMs and tasks. An illustration of the **DSP** framework is shown in **Figure 2**.
+The policy LM can be trained through (1) `supervised finetuning from annotated data (SFT)` and (2) `reinforcement learning from offline and online rewards (RL)` to explore directional stimulus that better aligns LLMs with human preferences. This framework is flexibly applicable to various LMs and tasks. An illustration of the **DSP** framework is shown in **Figure 2**.
 
 Paper Link: https://arxiv.org/abs/2302.11520
 
