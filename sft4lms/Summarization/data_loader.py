@@ -9,6 +9,7 @@ from tqdm import tqdm
 import datasets
 from keybert import KeyBERT
 import yake
+import pytextrank
 # from keyphrase_vectorizers import KeyphraseCountVectorizer
 # from sentence_transformers import SentenceTransformer
 
