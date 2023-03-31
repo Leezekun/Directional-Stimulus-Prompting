@@ -3,7 +3,7 @@
 **Directional-Stimulus-Prompting** is a framework that uses a tuneable language model (LM) to provide guidance for the black-box frozen large language model (LLM) towards desirable properties. Specifically, we train a policy LM to generate discrete tokens as *directional stimulus* of each input, which is a hint/cue such as keywords of an article for summarization. The *directional stimulus* is then combined with the original input and fed into the LLM to guide its generation toward the desired target (an example can be seen in **Figure 1**). 
 
 <p align="center">
-  <img align="center" src="pics/example.png" width="480px" />
+  <img align="center" src="pics/example.png" width="600px" />
 </p>
 <p align="left">
   <b>Figure 1:</b> Comparison of our proposed Directional Stimulus Prompting with the standard prompting method to use the LLM such as GPT-3 on the summarization task. Our DSP uses a tuneable policy LM to generate the stimulus (highlighted in orange color), which is keywords in this case, to guide the LLM on generating the desired summary (highlighted in blue color) with higher rouge scores or other measures like human preference. 
@@ -14,7 +14,7 @@ The policy LM can be trained through `supervised finetuning from annotated data 
 Paper Link: https://arxiv.org/abs/2302.11520
 
 <p align="center">
-  <img align="center" src="pics/dsp.png" width="480px" />
+  <img align="center" src="pics/dsp.png" width="600px" />
 </p>
 <p align="left">
   <b>Figure 2:</b> Overview of our proposed framework DSP, which learns a small policy LM to improve the frozen LLM's performance on specific downstream tasks. Given the input, the policy LM generates stimulus to guide the LLM's generation, which is then evaluated with downstream performance measures or human labelers. The evaluation scores are used as rewards to optimize the policy LM with RL. The parameters of LLM are frozen while the policy LM is tuneable.
