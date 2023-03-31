@@ -1,0 +1,70 @@
+The following are conversations between a user and an assistant.  The assistant can help the user with booking or providing information of restaurant, hotel, attraction, taxi, train, hospital, police, and so on.
+
+Conversation: 
+User: do you book trains for the bishops stortford ?
+Assistant: yes . are you departing or arriving in [value_destination] ?
+User: i am going there from cambridge on thursday .
+Assistant: i have [value_choice] trains going to [value_destination] from [value_departure] on [value_day] . what time do you need to arrive ?
+User: i would like to arrive by 18:15 .
+Assistant: [value_id] will have you in [value_destination] by [value_arrive] .
+User: i need 2 tickets .
+Assistant: the [value_id] will get you there by [value_arrive] . i can book you [value_people] tickets on that if you would like ?
+User: 2 tickets will be fine , please .
+Assistant: tr0277 2 tickets . the total fee is [value_price] payable at the station . reference number is : [value_reference] . will there be anything else i can help you with today ?
+User: a nice place to eat that serves austrian food . in the centre of town if possible .
+Assistant: i am so sorry no [value_food] restaurant -s in that area , another food type perhaps ?
+User: okay , do you have any good restaurant -s serving british food ?
+Assistant: there are [value_choice] restaurant -s in the [value_area] that serve [value_food] food , is there a price range you would like to stay in ?
+User: any is fine , can i get the phone number and postcode of 1 you would recommend ?
+Assistant: i would recommend the [value_name] . their phone number is [value_phone] . their postcode is [value_postcode] .
+User: great ! thanks . that s all i need . goodbye .
+Assistant: awesome . we 're here 24 and 7 if you need us again . have a great day !
+
+Conversation:
+User: i ' m looking for a hotel in the moderate price range . i definitely want a hotel , not a guest house .
+Assistant: of course . there are [value_choice] [value_type] in the [value_area] and [value_choice] in the [value_area] of town . do you have a preference ?
+User: is there anything to the west , preferably with a 4 star rating ?
+Assistant: i ' m sorry but nothing exists in [value_area] north with [value_stars] 4 star rateing in [value_price] moderate price range . could we try another area ?
+User: is there 1 in the cheap range ?
+Assistant: no , there is not .
+User: oh goodness . can you check once again for a hotel , star 4 , in the west . cheap is fine .
+Assistant: the [value_name] is located at [value_address] . do you need more information or would you like to book now ?
+User: yeah book for 5 people .
+Assistant: for how many days ?
+User: will this start on friday ?
+Assistant: yes . would you like reservations ? what day will it start ? how many people ?
+User: i would like a reservation for 5 people for 4 nights , beginning friday , at the cambridge belfry .
+Assistant: you are all booked and your reservation number is [value_reference].
+User: thank you for the reservation . i am also looking for a lovely park in north cambridge .
+Assistant: i would suggest [value_name] .
+User: what is the phone number ?
+Assistant: the phone number is [value_phone] .
+User: i also need a taxi between the 2 place -s .
+Assistant: please give me the travel time , departure location and arrival location .
+User: i want to leave the hotel by 04:30 .
+Assistant: what time do you need to leave the restaurant by ?
+User: i want to be pickup at at the hotel by 04:30 .
+Assistant: great your booking is complete . you will be picked up in a [value_car] by [value_leave] at [value_departure] and dropped off at the [value_destination] .
+User: do you have their contact number ?
+Assistant: their contact number is [value_phone] . is there anything else i can help you with today ?
+User: that will be all for today . thank you . goodbye .
+Assistant: thank you i ' m glad i could help . goodbye .
+
+Conversation:
+User: i want to find place -s to go in the centre of town that are park type attractions .
+Assistant: i think that you will like [value_name] . it is [value_price] , may i book it for you ?
+User: yes , that sounds good ! please provide me with the postcode .
+Assistant: i ' m sorry , we are n't able to book tickets for this attraction , but their postcode [value_postcode] cb21jf , and i can provide their address and phone if you like ?
+User: no . that is all i need . i would like help finding a cheap guest house though .
+Assistant: i have [value_choice] options for you . do you need wifi or parking ? is there a part of town you prefer to stay in ?
+User: it should include free wifi and should be in the east .
+Assistant: there seems to be an opening at [value_name] . would you like me to book you a room ?
+User: yes , please . 5 people for 5 nights starting thursday .
+Assistant: booking was successful . your reference number is : [value_reference] .
+User: thank you very much !
+Assistant: you are welcome . is there anything else i can do for you ?
+User: no thank you . i appreciate all of your help .
+Assistant: thank you i ' m glad i could help .
+
+Conversation: 
+[[DIALOG]]
