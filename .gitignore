@@ -137,6 +137,7 @@ cluster_utils/
 
 # my file
 deprecated/
+rl4lms/envs/text_generation/my_utils.py
 rl4lms_exps/
 sft4lms/ckpt
 sft4lms/data/cnndm

@@ -24,7 +24,7 @@ Currently, we test the framework on two benchmark tasks:
  - Summarization
  - Dialogue Generation
 
-Our code is based on [RL4LMs](https://github.com/allenai/RL4LMs). Users can customize the dataset, metrics, and LLM-based reward function to train transformer-based policy LMs, to provide guidance for the LLM towards the desirable properties.
+Our code is based on [RL4LMs](https://github.com/allenai/RL4LMs). Users can customize the dataset, metrics, and LLM-based reward function to train transformer-based policy LMs, to provide guidance for the LLMs towards the desirable properties.
 
 
 ---
