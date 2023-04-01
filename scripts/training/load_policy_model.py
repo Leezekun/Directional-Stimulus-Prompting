@@ -9,7 +9,7 @@ tokenizer_name = 't5-base'
 dataset_name ="cnndm"
 fs_ratio = 0.01
 
-model_path = '$PROJECT_PATH/rl4lms_exps/summarization_with_hint/'
+model_path = './rl4lms_exps/summarization_with_hint/'
 project_name = 'flan-t5_nlpo_on_supervised_2000-final'
 
 '''

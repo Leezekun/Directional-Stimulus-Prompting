@@ -1,4 +1,4 @@
-gpu=4,5,6,7
+gpu=0,1,2,3
 
 # summarization with hint
 CUDA_VISIBLE_DEVICES=$gpu python scripts/training/train_text_generation.py \

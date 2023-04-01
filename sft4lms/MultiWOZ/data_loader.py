@@ -102,15 +102,15 @@ def get_data_split(dataset, dataset_version, n_train, n_test, n_val, return_dict
         raise NotImplementedError 
 
     if dataset == 'multiwoz':
-        with open(f"$PROJECT_PATH/sft4lms/data/multiwoz/data/{rawdata_path}/train_raw_dials.json", 'r') as file:
+        with open(f"./sft4lms/data/multiwoz/data/{rawdata_path}/train_raw_dials.json", 'r') as file:
             train_data = json.load(file)
             train_data = get_multiwoz_data(train_data, n_train)
 
-        with open(f"$PROJECT_PATH/sft4lms/data/multiwoz/data/{rawdata_path}/dev_raw_dials.json", 'r') as file:
+        with open(f"./sft4lms/data/multiwoz/data/{rawdata_path}/dev_raw_dials.json", 'r') as file:
             val_data = json.load(file)
             val_data = get_multiwoz_data(val_data, n_val)
         
-        with open(f"$PROJECT_PATH/sft4lms/data/multiwoz/data/{rawdata_path}/test_raw_dials.json", 'r') as file:
+        with open(f"./sft4lms/data/multiwoz/data/{rawdata_path}/test_raw_dials.json", 'r') as file:
             test_data = json.load(file)
             test_data = get_multiwoz_data(test_data, n_test)
     else:

@@ -213,7 +213,7 @@ def get_extraction_data(dataset, data, extraction_mode, extraction_source):
 def get_data_split(dataset, n_train, n_val, n_test, extraction_mode, extraction_source, min_keywords=1, return_dict=True):
 
     # load existing data
-    data_path = f"$PROJECT_PATH/sft4lms/data/{dataset}/{extraction_mode}-{extraction_source}/"
+    data_path = f"./sft4lms/data/{dataset}/{extraction_mode}-{extraction_source}/"
     if not os.path.exists(data_path):
         os.makedirs(data_path)
 

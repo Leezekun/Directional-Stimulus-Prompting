@@ -20,8 +20,8 @@ reward_fn:
     top_p: 1.0
     stop_words: ["Article:", "Q:",  "A:"]
     prompt_prefix: "Extract the keywords: "
-    prompt_path: "$PROJECT_PATH/prompts/cnn_fs.txt"
-    hint_prompt_path: "$PROJECT_PATH/prompts/cnn_hint_fs.txt"
+    prompt_path: "./prompts/cnn_fs.txt"
+    hint_prompt_path: "./prompts/cnn_hint_fs.txt"
     gpt3_metric: "rouge"
     use_baseline: False
     t5_metric: "hint_hit"
@@ -55,7 +55,7 @@ alg:
   id: nlpo
   args: 
     n_steps: 512
-    batch_size: 1
+    batch_size: 4
     verbose: 1
     learning_rate: 0.000002
     n_epochs: 5
@@ -103,8 +103,8 @@ train_evaluation:
         top_p: 1.0
         stop_words: ["Article:", "Q:",  "A:"]
         prompt_prefix: "Extract the keywords: "
-        prompt_path: "$PROJECT_PATH/prompts/cnn_fs.txt"
-        hint_prompt_path: "$PROJECT_PATH/prompts/cnn_hint_fs.txt"
+        prompt_path: "./prompts/cnn_fs.txt"
+        hint_prompt_path: "./prompts/cnn_hint_fs.txt"
         use_lower_baseline: False
         use_upper_baseline: False
         gpt3_metrics: 

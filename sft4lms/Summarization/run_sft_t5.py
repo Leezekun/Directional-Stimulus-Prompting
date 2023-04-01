@@ -320,9 +320,9 @@ def main():
     """prepare for training""" 
     if args.output_dir is None:
         if task == 'summarization':
-            output_dir = f"$PROJECT_PATH/sft4lms/ckpt/{dataset}_{n_train}/summarization/{args.model}"
+            output_dir = f"./sft4lms/ckpt/{dataset}_{n_train}/summarization/{args.model}"
         elif task == 'extraction':
-            output_dir = f"$PROJECT_PATH/sft4lms/ckpt/{dataset}_{n_train}/{extraction_mode}-{extraction_source}/{args.model}"
+            output_dir = f"./sft4lms/ckpt/{dataset}_{n_train}/{extraction_mode}-{extraction_source}/{args.model}"
     else:
         output_dir = args.output_dir
 

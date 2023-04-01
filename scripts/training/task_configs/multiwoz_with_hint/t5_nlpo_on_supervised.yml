@@ -25,8 +25,8 @@ reward_fn:
     user_prefix: "User: "
     system_prefix: "Assistant: "
     system_hint_prefix: "Assistant([[HINT]]): "
-    prompt_path: "$PROJECT_PATH/prompts/multiwoz_fs.txt"
-    hint_prompt_path: "$PROJECT_PATH/prompts/multiwoz_hint_fs.txt"
+    prompt_path: "./prompts/multiwoz_fs.txt"
+    hint_prompt_path: "./prompts/multiwoz_hint_fs.txt"
     t5_metric: "dialog_act_accuracy"
     t5_coef: 0.
 
@@ -99,8 +99,8 @@ train_evaluation:
         stop_words: ["User:", "Conversation:"]
         system_prefix: "Assistant: "
         system_hint_prefix: "Assistant([[HINT]]): "
-        prompt_path: "$PROJECT_PATH/prompts/multiwoz_fs.txt"
-        hint_prompt_path: "$PROJECT_PATH/prompts/multiwoz_hint_fs.txt"
+        prompt_path: "./prompts/multiwoz_fs.txt"
+        hint_prompt_path: "./prompts/multiwoz_hint_fs.txt"
         gpt3_metric: "multiwoz"
         multiwoz_version: "2.0"
         use_lower_baseline: False

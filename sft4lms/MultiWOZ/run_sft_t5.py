@@ -346,7 +346,7 @@ def main():
 
     """prepare for training""" 
     if args.output_dir is None:
-        output_dir = f"$PROJECT_PATH/sft4lms/ckpt/{dataset}{dataset_version}_{n_train}/{args.model}/"
+        output_dir = f"./sft4lms/ckpt/{dataset}{dataset_version}_{n_train}/{args.model}/"
     else:
         output_dir = args.output_dir 
 
