@@ -1,5 +1,4 @@
 import os
-import transformers
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 import torch
 from huggingface_hub import create_repo
@@ -25,7 +24,7 @@ load best policy model
 '''
 load policy, value, and trainer state from checkpoints
 '''
-for iter in [8]:
+for iter in [1,3,5,7,9]:
     ckpt_path = os.path.join(model_path, project_name, "checkpoints", f"checkpoint_{iter}")
     state_dict = torch.load(ckpt_path, map_location=torch.device("cpu"))
     policy_state_dict = state_dict["policy_state"]
@@ -35,8 +34,7 @@ for iter in [8]:
     model.load_state_dict(policy_state_dict["policy_model"])
 
     # saved in local file
-    iter_new = 2*iter+1 # RUN2 from checkpoint 7
-    save_path = os.path.join(model_path, project_name, "checkpoints_policy", f"checkpoint_{iter_new}")
+    save_path = os.path.join(model_path, project_name, "checkpoints_policy", f"checkpoint_{iter}")
     model.save_pretrained(save_path, from_pt=True)
 
 # push to huggingface hub
