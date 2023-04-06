@@ -8,7 +8,7 @@ tokenizer:
 reward_fn:
   id: summarization_with_hint
   args:
-    gpt3_model: 'gpt-3.5-turbo'
+    gpt3_model: 'code-davinci-002'
     interval: 0.5
     timeout: 20.0
     exp: 2.0
@@ -89,7 +89,7 @@ train_evaluation:
   metrics:
     - id: summarization_with_hint
       args: 
-        gpt3_model: 'gpt-3.5-turbo'
+        gpt3_model: 'code-davinci-002'
         interval: 0.5
         timeout: 20.0
         exp: 2

@@ -7,7 +7,7 @@ tokenizer:
 reward_fn:
   id: multiwoz_with_hint
   args:
-    gpt3_model: 'gpt-3.5-turbo'
+    gpt3_model: 'code-davinci-002'
     interval: 0.5
     timeout: 20.0
     exp: 2
@@ -84,7 +84,7 @@ train_evaluation:
   metrics:
     - id: multiwoz_with_hint
       args: 
-        gpt3_model: 'gpt-3.5-turbo'
+        gpt3_model: 'code-davinci-002'
         interval: 0.5
         timeout: 20.0
         exp: 2.0

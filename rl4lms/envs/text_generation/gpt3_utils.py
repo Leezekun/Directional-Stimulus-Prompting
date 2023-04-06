@@ -10,7 +10,7 @@ avoid_keywords = ["one", "two", "three", "1", "2", "3", "a", "he", "she", "i", "
         "your", "my", "his", "her", "ours", "our", "could", "with", "whom", "whose"]
 
 class GPT3():
-    def __init__(self, model="gpt-3.5-turbo", interval=0.5, timeout=10.0, exp=2, patience=10, max_interval=4, max_prompt_length=4096):
+    def __init__(self, model="code-davinci-002", interval=0.5, timeout=10.0, exp=2, patience=10, max_interval=4, max_prompt_length=4096):
         self.model = model
         self.interval = interval
         self.timeout = timeout
@@ -48,7 +48,7 @@ class GPT3():
 
         while True and retry_interval_exp <= self.patience:
             try:
-                if self.model == "gpt-3.5-turbo": # chat completion
+                if self.model == "code-davinci-002": # chat completion
                     messages = [
                         {"role": "user", "content": prompt}
                     ]
