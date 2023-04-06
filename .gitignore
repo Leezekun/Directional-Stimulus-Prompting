@@ -128,7 +128,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# vscode
+# vscode 
 .vscode/
 .history/
 .idea/
@@ -143,3 +143,4 @@ sft4lms/ckpt
 sft4lms/data/cnndm
 sft4lms/data/multiwoz
 *.tar.gz
+flan-t5-*

@@ -205,9 +205,9 @@ def fine_tune_hf(
         hf_path = f"{model_name}-summarization-{dataset_name}_{n_train}-ep{epochs}"
     elif task == 'extraction':
         compute_metrics = compute_hit_metrics
-        # best_metric = "hint_precision"
-        best_metric = "loss"
-        hf_path = f"{model_name}-extraction-{dataset_name}_{n_train}-{extraction_source}-ep{epochs}"
+        best_metric = "hint_precision"
+        # best_metric = "loss"
+        hf_path = f"{model_name}-extraction-{dataset_name}_{n_train}-{extraction_source}-{best_metric}-ep{epochs}"
 
     # arguments
     training_args = Seq2SeqTrainingArguments(

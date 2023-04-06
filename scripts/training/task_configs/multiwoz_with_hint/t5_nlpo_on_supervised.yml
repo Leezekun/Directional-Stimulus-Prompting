@@ -63,7 +63,7 @@ alg:
   policy:
     id: maskable_seq2seq_lm_actor_critic_policy
     args:
-      model_name: Zekunli/t5-base-da-multiwoz2.0_80
+      model_name: ./sft4lms/ckpt/multiwoz2.0_80/t5-base
       apply_model_parallel: True
       prompt_truncation_side: "left"
       top_mask: 0.9

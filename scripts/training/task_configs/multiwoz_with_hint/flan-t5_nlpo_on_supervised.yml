@@ -44,8 +44,8 @@ datapool:
   args:
     version: "2.0"
     n_train: 80
-    n_val: 1
-    n_test: 1
+    n_val: 100
+    n_test: 1000
 
 alg:
   id: nlpo
@@ -63,7 +63,7 @@ alg:
   policy:
     id: maskable_seq2seq_lm_actor_critic_policy
     args:
-      model_name: Zekunli/flan-t5-large-da-multiwoz2.0_80
+      model_name: ./sft4lms/ckpt/multiwoz2.0_80/flan-t5-large
       apply_model_parallel: True
       prompt_truncation_side: "left"
       top_mask: 0.9

@@ -1,4 +1,4 @@
-gpu=7
+gpu=2,3
 
 for n_train in 80 800
 do
@@ -14,7 +14,7 @@ do
                                                 --task da \
                                                 --load_strategy load_initial \
                                                 --model flan-t5-large \
-                                                --train_batch_size 1 \
+                                                --train_batch_size 8 \
                                                 --eval_batch_size 24 \
                                                 --learning_rate 2e-5 \
                                                 --epochs 50 \
@@ -22,6 +22,7 @@ do
                                                 --save_total_limit 3 \
                                                 --early_stopping_patience 5 \
                                                 --do_inference \
-                                                --do_train                                                
+                                                --do_train \
+                                                --push_to_hub                                           
 done
 done

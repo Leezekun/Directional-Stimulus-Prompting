@@ -66,7 +66,7 @@ alg:
   policy:
     id: maskable_seq2seq_lm_actor_critic_policy
     args:
-      model_name: Zekunli/t5-base-extraction-cnndm_2000-all-loss-ep10
+      model_name: ./sft4lms/ckpt/cnndm_2000/textrank-all/t5-base/best_checkpoint
       apply_model_parallel: True
       prompt_truncation_side: "right"
       min_tokens_to_keep: 100

@@ -203,7 +203,6 @@ def fine_tune_hf(
         compute_metrics = compute_bs_metrics
         # best_metric = "accuracy"
         best_metric = "loss"
-
     
     elif task == 'nlg':
         train_dataset = train_dataset.map(preprocess_function_for_nlg, batched=True, remove_columns=["da_input", "da_output", "bs_input", "bs_output", "nlg_input", "nlg_output"])
@@ -213,7 +212,7 @@ def fine_tune_hf(
         best_metric = "rouge1"
 
     # huggingface repo name
-    hf_path = f"{model_name}-{task}-{dataset_name}{dataset_version}_{n_train}-ep{epochs}"
+    hf_path = f"{model_name}-{task}-{dataset_name}{dataset_version}_{n_train}-{best_metric}-ep{epochs}"
 
     # arguments
     training_args = Seq2SeqTrainingArguments(

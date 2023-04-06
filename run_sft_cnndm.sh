@@ -1,4 +1,4 @@
-gpu=4,5,6,7
+gpu=2,3
 
 for n_train in 1000 2000 4000
 do
@@ -17,7 +17,7 @@ CUDA_VISIBLE_DEVICES=$gpu python -m sft4lms.Summarization.run_sft_t5 --task extr
                                                                         --epochs 10 \
                                                                         --logging_steps 200 \
                                                                         --save_total_limit 3 \
-                                                                        --early_stopping_patience 3 \
+                                                                        --early_stopping_patience 5 \
                                                                         --do_inference \
                                                                         --do_train \
                                                                         --push_to_hub
