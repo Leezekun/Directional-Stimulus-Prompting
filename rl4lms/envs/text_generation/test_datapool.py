@@ -23,6 +23,7 @@ class CNNDailyMailHint(TextGenPool):
     @classmethod
     def prepare(cls,
                 split: str,
+                dataset: str,
                 n_train: int,
                 n_val: int = 500,
                 n_test: int = 500,
@@ -33,9 +34,9 @@ class CNNDailyMailHint(TextGenPool):
                 truncate_article: int = None,
                 max_size: int = None):
 
-        train_data, val_data, test_data = summarization_get_data_split(dataset="cnndm", n_train=n_train, n_val=n_val, n_test=n_test, 
+        train_data, val_data, test_data = summarization_get_data_split(dataset=dataset, n_train=n_train, n_val=n_val, n_test=n_test, 
                                                                        extraction_mode=extraction_mode, extraction_source=extraction_source, 
-                                                                       min_keywords=1, return_dict=False)
+                                                                       return_dict=False)
         if split == "train":
             random.shuffle(train_data)
             dataset = train_data
@@ -55,8 +56,7 @@ class CNNDailyMailHint(TextGenPool):
                 item["article"] = " ".join(tokens)
 
             sample = Sample(id=f"{split}_{ix}",
-                            prompt_or_input_text=prompt_prefix +
-                            item["article"] + prompt_suffix,
+                            prompt_or_input_text=prompt_prefix+item["article"]+prompt_suffix,
                             references=[item["summary"]],
                             meta_data={"phrases": item["phrases"], "target": item["target"]}
                             )

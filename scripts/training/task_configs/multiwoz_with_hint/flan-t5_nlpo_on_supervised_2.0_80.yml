@@ -1,0 +1,117 @@
+tokenizer:
+  model_name: google/flan-t5-large
+  padding_side: "left"
+  truncation_side: "left"
+  pad_token_as_eos_token: False
+
+reward_fn:
+  id: multiwoz_with_hint
+  args:
+    gpt3_model: 'gpt-3.5-turbo'
+    interval: 0.5
+    timeout: 20.0
+    exp: 2
+    patience: 10
+    split_token: ";"
+    split_token_id: 117 # token id of t5 for ";"
+    temperature: 0.7
+    max_tokens: 64
+    num_seqs: 4
+    selection_strategy: "choose_all"
+    top_p: 1.0
+    stop_words: ["User:", "Conversation:", "<|im_end|>"]
+    gpt3_metric: "sacre_bleu"
+    gpt3_coef: 10.
+    use_baseline: False
+    user_prefix: "User: "
+    system_prefix: "Assistant: "
+    system_hint_prefix: "Assistant([[HINT]]): "
+    prompt_path: "./prompts/multiwoz_fs.txt"
+    hint_prompt_path: "./prompts/multiwoz_hint_fs.txt"
+    t5_metric: "dialog_act_accuracy"
+    t5_coef: 0.
+
+env:
+  n_envs: 10 # how many envs in parallel, 10 by default
+  args:
+    max_prompt_length: 512
+    max_episode_length: 40
+    terminate_on_eos: True
+    prompt_truncation_side: "left"
+    context_start_token: 0
+
+datapool:
+  id: multiwoz_hint
+  args:
+    version: "2.0"
+    n_train: 80
+    n_val: 100
+    n_test: 1000
+
+alg:
+  id: nlpo
+  args: 
+    n_steps: 512
+    batch_size: 8
+    verbose: 1
+    learning_rate: 0.000002
+    n_epochs: 5
+    ent_coef: 0.0
+    vf_coef: 0.5
+  kl_div:
+    coeff: 0.01
+    target_kl: 0.2
+  policy:
+    id: maskable_seq2seq_lm_actor_critic_policy
+    args:
+      model_name: ./sft4lms/ckpt/multiwoz2.0_80/flan-t5-large-ep25/
+      apply_model_parallel: True
+      prompt_truncation_side: "left"
+      top_mask: 0.9
+      mask_type: "learned_top_p"
+      target_update_iterations: 20
+      generation_kwargs:
+        min_length: 1
+        max_new_tokens: 40
+        do_sample: True
+        top_k: 50
+
+      
+train_evaluation:
+  eval_batch_size: 10
+  n_iters: 10
+  eval_every: 2
+  save_every: 2
+  metrics:
+    - id: multiwoz_with_hint
+      args: 
+        gpt3_model: 'gpt-3.5-turbo'
+        interval: 0.5
+        timeout: 20.0
+        exp: 2.0
+        patience: 10
+        split_token: ";"
+        split_token_id: 117 # token id of t5 for ";"
+        temperature: 0.7
+        max_tokens: 64
+        num_seqs: 3
+        selection_strategy: "choose_all"
+        top_p: 1.0
+        stop_words: ["User:", "Conversation:", "<|im_end|>"]
+        system_prefix: "Assistant: "
+        system_hint_prefix: "Assistant([[HINT]]): "
+        prompt_path: "./prompts/multiwoz_fs.txt"
+        hint_prompt_path: "./prompts/multiwoz_hint_fs.txt"
+        gpt3_metric: "multiwoz"
+        multiwoz_version: "2.0"
+        evaluate_policy_model: True
+        use_lower_baseline: False
+        use_upper_baseline: False
+        t5_metrics: 
+          - "dialog_act_accuracy"
+  generation_kwargs:
+    min_length: 1
+    max_new_tokens: 40
+    num_beams: 5
+
+

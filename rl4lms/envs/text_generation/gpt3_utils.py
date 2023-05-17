@@ -3,6 +3,7 @@ import os
 import time
 import openai
 import logging
+import random
 from transformers import GPT2TokenizerFast
 
 avoid_keywords = ["one", "two", "three", "1", "2", "3", "a", "he", "she", "i", "we", "you", "it", "this", 
@@ -10,7 +11,7 @@ avoid_keywords = ["one", "two", "three", "1", "2", "3", "a", "he", "she", "i", "
         "your", "my", "his", "her", "ours", "our", "could", "with", "whom", "whose"]
 
 class GPT3():
-    def __init__(self, model="code-davinci-002", interval=0.5, timeout=10.0, exp=2, patience=10, max_interval=4, max_prompt_length=4096):
+    def __init__(self, model="gpt-3.5-turbo", interval=0.5, timeout=10.0, exp=2, patience=10, max_interval=4, max_prompt_length=4096):
         self.model = model
         self.interval = interval
         self.timeout = timeout
@@ -23,10 +24,10 @@ class GPT3():
 
     def call(
         self, prompt, temperature=1.0, top_p=1.0, max_tokens=64, n=1, 
-        frequency_penalty=0, presence_penalty=0, stop="Q:", rstrip=False,
+        frequency_penalty=0, presence_penalty=0, stop=["Q:"], rstrip=False,
         **kwargs):
 
-        openai.api_key = os.environ.get('OPENAI_ACCESS_KEY', None)
+        openai.api_key = os.environ.get('OPENAI_API_KEY', None)
 
         # check if exceeding len limit
         input_len = len(self.tokenizer(prompt).input_ids)
@@ -48,7 +49,7 @@ class GPT3():
 
         while True and retry_interval_exp <= self.patience:
             try:
-                if self.model == "code-davinci-002": # chat completion
+                if self.model == "gpt-3.5-turbo": # chat completion
                     messages = [
                         {"role": "user", "content": prompt}
                     ]
@@ -95,3 +96,17 @@ class GPT3():
                 retry_interval_exp += 1
         
         return None
+    
+
+if __name__ == "__main__":
+    gpt3 = GPT3()
+    
+    # messages = []
+    # for i in range(100):
+    #     messages.append(f"what is the sum of {random.randint(1000, 10000)} and {random.randint(1000, 10000)}?")
+    # predictions = gpt3.async_call(prompt=messages)
+
+    for i in range(100):
+        message = f"what is the sum of {random.randint(1000, 10000)} and {random.randint(1000, 10000)}?"
+        predictions = gpt3.call(prompt=message)
+        print(message, predictions)

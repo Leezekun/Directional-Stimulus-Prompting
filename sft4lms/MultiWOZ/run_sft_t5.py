@@ -193,7 +193,6 @@ def fine_tune_hf(
         val_dataset = val_dataset.map(preprocess_function_for_da, batched=True, remove_columns=["da_input", "da_output", "bs_input", "bs_output", "nlg_input", "nlg_output"])
         test_dataset = test_dataset.map(preprocess_function_for_da, batched=True, remove_columns=["da_input", "da_output", "bs_input", "bs_output", "nlg_input", "nlg_output"])
         compute_metrics = compute_da_metrics
-        # best_metric = "accuracy"
         best_metric = "loss"
 
     elif task == 'bs':
@@ -201,7 +200,6 @@ def fine_tune_hf(
         val_dataset = val_dataset.map(preprocess_function_for_bs, batched=True, remove_columns=["da_input", "da_output", "bs_input", "bs_output", "nlg_input", "nlg_output"])
         test_dataset = test_dataset.map(preprocess_function_for_bs, batched=True, remove_columns=["da_input", "da_output", "bs_input", "bs_output", "nlg_input", "nlg_output"])
         compute_metrics = compute_bs_metrics
-        # best_metric = "accuracy"
         best_metric = "loss"
     
     elif task == 'nlg':
@@ -211,12 +209,10 @@ def fine_tune_hf(
         compute_metrics = compute_rouge_metrics
         best_metric = "rouge1"
 
-    # huggingface repo name
-    hf_path = f"{model_name}-{task}-{dataset_name}{dataset_version}_{n_train}-{best_metric}-ep{epochs}"
-
     # arguments
     training_args = Seq2SeqTrainingArguments(
-    output_dir=output_dir if not push_to_hub else hf_path, # output directory
+    output_dir=output_dir, # output directory
+    # output_dir=output_dir if not push_to_hub else hf_path, # output directory
     num_train_epochs=epochs, # total number of training epochs
     per_device_train_batch_size=train_batch_size,  # batch size per device during training
     per_device_eval_batch_size=eval_batch_size,   # batch size for evaluation
@@ -232,8 +228,8 @@ def fine_tune_hf(
     seed=seed,
     push_to_hub=push_to_hub,
     predict_with_generate=True, # for evaluation metrics
-    load_best_model_at_end=True,
-    metric_for_best_model=best_metric,
+    # load_best_model_at_end=True,
+    # metric_for_best_model=best_metric,
     remove_unused_columns=True
     )
 
@@ -247,7 +243,7 @@ def fine_tune_hf(
     eval_dataset=val_dataset,
     data_collator=data_collator,
     compute_metrics=compute_metrics,
-    callbacks = [EarlyStoppingCallback(early_stopping_patience=early_stopping_patience)]    
+    # callbacks = [EarlyStoppingCallback(early_stopping_patience=early_stopping_patience)]    
     )
     
     if do_train:
@@ -294,7 +290,7 @@ def main():
     parser = argparse.ArgumentParser()
     # arguments for dataset
     parser.add_argument('--dataset', type=str, default='multiwoz', choices=['multiwoz']) #
-    parser.add_argument('--dataset_version', type=str, default='2.3', choices=['2.0', '2.1', '2.3']) #
+    parser.add_argument('--dataset_version', type=str, default='2.0', choices=['2.0', '2.1']) #
 
     parser.add_argument('--n_train', type=int, default=2000) #
     parser.add_argument('--n_val', type=int, default=500) #
@@ -345,7 +341,7 @@ def main():
 
     """prepare for training""" 
     if args.output_dir is None:
-        output_dir = f"./sft4lms/ckpt/{dataset}{dataset_version}_{n_train}/{args.model}/"
+        output_dir = f"./sft4lms/ckpt/{dataset}{dataset_version}_{n_train}/{args.model}-ep{args.epochs}/"
     else:
         output_dir = args.output_dir 
 

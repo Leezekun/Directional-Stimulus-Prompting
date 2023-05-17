@@ -1,4 +1,4 @@
-gpu=2,3
+gpu=0,1,2
 
 for n_train in 80 800
 do
@@ -17,12 +17,12 @@ do
                                                 --train_batch_size 8 \
                                                 --eval_batch_size 24 \
                                                 --learning_rate 2e-5 \
-                                                --epochs 50 \
+                                                --epochs 25 \
                                                 --logging_steps 200 \
                                                 --save_total_limit 3 \
                                                 --early_stopping_patience 5 \
                                                 --do_inference \
                                                 --do_train \
-                                                --push_to_hub                                           
+                                                # --push_to_hub                                           
 done
 done

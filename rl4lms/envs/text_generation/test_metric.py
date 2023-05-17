@@ -76,11 +76,13 @@ class SummarizationWithHintMetric(BaseMetric):
                  hint_prompt_path: str,
                  gpt3_metrics: List[dict],
                  t5_metrics: List[dict],
+                 evaluate_policy_model: bool = True,
                  use_upper_baseline: bool = False,
                  use_lower_baseline: bool = False,
                  ) -> None:
         super().__init__()
         self.gpt3 = GPT3(model=gpt3_model, interval=interval, timeout=timeout, exp=exp, patience=patience)
+        self.evaluate_policy_model = evaluate_policy_model
         self.use_upper_baseline = use_upper_baseline
         self.use_lower_baseline = use_lower_baseline
         self.prompt_prefix = prompt_prefix
@@ -130,8 +132,6 @@ class SummarizationWithHintMetric(BaseMetric):
                 t5_score_keys = ["lexical/rouge_rouge1", "lexical/rouge_rouge2"]
             elif t5_metric_type == 'hint_hit':
                 t5_score_keys = ["keyword/hint_hit", "keyword/hint_num"]
-            elif t5_metric_type == 'hint_bleu':
-                t5_score_keys = ["keyword/hint_bleu"]
             else:
                 raise NotImplementedError
             self.t5_metrics.append(MetricRegistry.get(t5_metric_type, t5_metric_args))
@@ -171,28 +171,29 @@ class SummarizationWithHintMetric(BaseMetric):
                     print(f"{score_key}: {score}")
 
             # gpt3 generation
-            gpt3_input_text = self.hint_prompt.replace("[[QUESTION]]", t5_input_text)
-            gpt3_input_text = gpt3_input_text.replace("[[HINT]]", t5_gen_text)
-            gpt3_gen_texts = RewardSummarizationWithHint.gpt3_hint_generation(
-                self.gpt3, gpt3_input_text, self.temperature, self.max_tokens, self.num_seqs, self.top_p, self.stop_words)
-            gpt3_gen_texts = RewardSummarizationWithHint.generation_selection(self.selection_strategy, gpt3_gen_texts)
-            gpt3_generated_texts.append(gpt3_gen_texts)
+            if self.evaluate_policy_model:
+                gpt3_input_text = self.hint_prompt.replace("[[QUESTION]]", t5_input_text)
+                gpt3_input_text = gpt3_input_text.replace("[[HINT]]", t5_gen_text)
+                gpt3_gen_texts = RewardSummarizationWithHint.gpt3_hint_generation(
+                    self.gpt3, gpt3_input_text, self.temperature, self.max_tokens, self.num_seqs, self.top_p, self.stop_words)
+                gpt3_gen_texts = RewardSummarizationWithHint.generation_selection(self.selection_strategy, gpt3_gen_texts)
+                gpt3_generated_texts.append(gpt3_gen_texts)
 
-            # reward for gpt3
-            for j, gpt3_metric in enumerate(self.gpt3_metrics):
-                gpt3_score_keys = self.gpt3_score_keys[j]
-                gpt3_scores = [[] for _ in range(len(gpt3_score_keys))]
-                for g, gpt3_gen_text in enumerate(gpt3_gen_texts):
-                    metric_results = gpt3_metric.compute([t5_input_text], [gpt3_gen_text], [reference_text])
+                # reward for gpt3
+                for j, gpt3_metric in enumerate(self.gpt3_metrics):
+                    gpt3_score_keys = self.gpt3_score_keys[j]
+                    gpt3_scores = [[] for _ in range(len(gpt3_score_keys))]
+                    for g, gpt3_gen_text in enumerate(gpt3_gen_texts):
+                        metric_results = gpt3_metric.compute([t5_input_text], [gpt3_gen_text], [reference_text])
+                        for k, score_key in enumerate(gpt3_score_keys):
+                            score = metric_results[score_key][1]
+                            score = 0 if score == 'n/a' else score
+                            gpt3_scores[k].append(score)
+                    # average score
                     for k, score_key in enumerate(gpt3_score_keys):
-                        score = metric_results[score_key][1]
-                        score = 0 if score == 'n/a' else score
-                        gpt3_scores[k].append(score)
-                # average score
-                for k, score_key in enumerate(gpt3_score_keys):
-                    avg_score = np.mean(gpt3_scores[k])
-                    gpt3_rewards[j][k].append(avg_score)
-                    print(f"{score_key}: {avg_score}")
+                        avg_score = np.mean(gpt3_scores[k])
+                        gpt3_rewards[j][k].append(avg_score)
+                        print(f"{score_key}: {avg_score}")
 
             if self.use_lower_baseline:
                 gpt3_input_text = self.prompt.replace("[[QUESTION]]", t5_input_text)
@@ -248,10 +249,11 @@ class SummarizationWithHintMetric(BaseMetric):
                 metric_dict[f"t5/{score_key}"] = (t5_rewards[i][j], np.mean(t5_rewards[i][j]))
         
         # metric for gpt3
-        for i, score_keys in enumerate(self.gpt3_score_keys):
-            for j, score_key in enumerate(score_keys):
-                metric_dict[f"gpt3/{score_key}"] = (gpt3_rewards[i][j], np.mean(gpt3_rewards[i][j]))
-        metric_dict["gpt3_generated_text"] = (gpt3_generated_texts, 0.)
+        if self.evaluate_policy_model:
+            for i, score_keys in enumerate(self.gpt3_score_keys):
+                for j, score_key in enumerate(score_keys):
+                    metric_dict[f"gpt3/{score_key}"] = (gpt3_rewards[i][j], np.mean(gpt3_rewards[i][j]))
+            metric_dict["gpt3_generated_text"] = (gpt3_generated_texts, 0.)
 
         # metric for baseline gpt3
         if self.use_lower_baseline:
@@ -289,6 +291,7 @@ class MultiWOZWithHintMetric(BaseMetric):
                  gpt3_metric: str,
                  multiwoz_version: str,
                  t5_metrics: List[str],
+                 evaluate_policy_model: bool = True,
                  use_lower_baseline: bool = False,
                  use_upper_baseline: bool = False,
                  user_prefix: str = "User: ",
@@ -297,6 +300,7 @@ class MultiWOZWithHintMetric(BaseMetric):
                  ) -> None:
         super().__init__()
         self.gpt3 = GPT3(model=gpt3_model, interval=interval, timeout=timeout, exp=exp, patience=patience)
+        self.evaluate_policy_model = evaluate_policy_model
         self.use_lower_baseline = use_lower_baseline
         self.use_upper_baseline = use_upper_baseline
         self.selection_strategy = selection_strategy
@@ -384,11 +388,12 @@ class MultiWOZWithHintMetric(BaseMetric):
                     print(f"{score_key}: {score}")
 
             # gpt3 generation
-            gpt3_input_text = self.hint_prompt.replace("[[DIALOG]]", dialog_with_predicted_hint)
-            gpt3_gen_texts = RewardSummarizationWithHint.gpt3_hint_generation(
-                self.gpt3, gpt3_input_text, self.temperature, self.max_tokens, self.num_seqs, self.top_p, self.stop_words)
-            gpt3_gen_texts = RewardSummarizationWithHint.generation_selection(self.selection_strategy, gpt3_gen_texts)
-            gpt3_generated_texts.append(gpt3_gen_texts)
+            if self.evaluate_policy_model:
+                gpt3_input_text = self.hint_prompt.replace("[[DIALOG]]", dialog_with_predicted_hint)
+                gpt3_gen_texts = RewardSummarizationWithHint.gpt3_hint_generation(
+                    self.gpt3, gpt3_input_text, self.temperature, self.max_tokens, self.num_seqs, self.top_p, self.stop_words)
+                gpt3_gen_texts = RewardSummarizationWithHint.generation_selection(self.selection_strategy, gpt3_gen_texts)
+                gpt3_generated_texts.append(gpt3_gen_texts)
 
             # lower bound for gpt3, not using hints
             if self.use_lower_baseline:
@@ -407,14 +412,15 @@ class MultiWOZWithHintMetric(BaseMetric):
                 upper_gpt3_generated_texts.append(gpt3_gen_texts)
 
         # evaluate on the corpus level
-        for g in range(len(gpt3_generated_texts[0])):
-            gpt3_generated_text = [gen_texts[g] for gen_texts in gpt3_generated_texts]
-            metric_results = self.gpt3_metric.compute(None, gpt3_generated_text, None, meta_infos)
+        if self.evaluate_policy_model:
+            for g in range(len(gpt3_generated_texts[0])):
+                gpt3_generated_text = [gen_texts[g] for gen_texts in gpt3_generated_texts]
+                metric_results = self.gpt3_metric.compute(None, gpt3_generated_text, None, meta_infos)
+                for j, score_key in enumerate(self.gpt3_score_keys):
+                    gpt3_rewards[j].append(metric_results[score_key][1])
+            # average over multiple inferences
             for j, score_key in enumerate(self.gpt3_score_keys):
-                gpt3_rewards[j].append(metric_results[score_key][1])
-        # average over multiple inferences
-        for j, score_key in enumerate(self.gpt3_score_keys):
-            gpt3_rewards[j] = np.mean(gpt3_rewards[j])
+                gpt3_rewards[j] = np.mean(gpt3_rewards[j])
 
         if self.use_lower_baseline:
             for g in range(len(lower_gpt3_generated_texts[0])):
@@ -443,9 +449,10 @@ class MultiWOZWithHintMetric(BaseMetric):
                 metric_dict[f"t5_{score_key}"] = (t5_rewards[i][j], np.mean(t5_rewards[i][j]))
 
         # metric for gpt3
-        for i, score_key in enumerate(self.gpt3_score_keys):
-            metric_dict[f"gpt3_{score_key}"] = (None, gpt3_rewards[i])
-        metric_dict["gpt3_generated_text"] = (gpt3_generated_texts, 0.)
+        if self.evaluate_policy_model:
+            for i, score_key in enumerate(self.gpt3_score_keys):
+                metric_dict[f"gpt3_{score_key}"] = (None, gpt3_rewards[i])
+            metric_dict["gpt3_generated_text"] = (gpt3_generated_texts, 0.)
 
         # metric for lower and upper baseline gpt3
         if self.use_lower_baseline:

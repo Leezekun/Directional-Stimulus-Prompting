@@ -77,7 +77,7 @@ class BLEUScorer(object):
 
 
 class MultiWozEvaluator(object):
-    def __init__(self, dataset_version="2.3", tokenizer_path="google/flan-t5-large"):
+    def __init__(self, dataset_version="2.0", tokenizer_path="google/flan-t5-large"):
         if dataset_version == "2.0":
             Config = Config20
         elif dataset_version == "2.1":

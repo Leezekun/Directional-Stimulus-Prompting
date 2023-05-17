@@ -90,21 +90,24 @@ class RewardSummarizationWithHint(RewardFunction):
                  prompt_path: str,
                  hint_prompt_path: str,
                  gpt3_metric: str,
+                 gpt3_coef: float,
                  use_baseline: bool,
                  t5_metric: str,
                  t5_coef: float,
+                 t5_pos_coef: float,
                  t5_neg_coef: float,
-                 step_reward_coef: float = 0.,
+                 step_reward_coef: float,
                  split_token: str = ";",
                  split_token_id: int = 117 # token id of ";"
                 ) -> None:
         super().__init__()
         self.gpt3 = GPT3(model=gpt3_model, interval=interval, timeout=timeout, exp=exp, patience=patience)
         # arguments for t5 reward
-        self.step_reward_coef = step_reward_coef
         self.split_token = split_token
         self.split_token_id = split_token_id
         self.t5_coef = t5_coef
+        self.step_reward_coef = step_reward_coef
+        self.t5_pos_coef = t5_pos_coef
         self.t5_neg_coef = t5_neg_coef
         # arguments for gpt3 inference
         self.temperature = temperature
@@ -113,7 +116,8 @@ class RewardSummarizationWithHint(RewardFunction):
         self.top_p = top_p
         self.stop_words = stop_words
         self.prompt_prefix = prompt_prefix
-        # for gpt3 reward
+        # arguments for gpt3 reward
+        self.gpt3_coef = gpt3_coef
         self.use_baseline = use_baseline
         self.selection_strategy = selection_strategy
         # prompt for gpt3
@@ -124,18 +128,26 @@ class RewardSummarizationWithHint(RewardFunction):
         # metric for gpt3 and t5
         from rl4lms.envs.text_generation.registry import MetricRegistry
         # reward for gpt3:
-        if gpt3_metric == "rouge":
-            self.gpt3_score_keys = ["lexical/rouge_rouge1", "lexical/rouge_rouge2", "lexical/rouge_rougeL", "lexical/rouge_rougeLsum"]  
+        args = {}
+        if gpt3_metric in ["rouge1", "rouge2", "rougeL"]:
+            self.gpt3_score_keys = [f"lexical/rouge_{gpt3_metric}"] 
+            gpt3_metric = "rouge"
+        elif gpt3_metric == "rouge-avg":
+            self.gpt3_score_keys = ["lexical/rouge_rouge1", "lexical/rouge_rouge2", "lexical/rouge_rougeL"] 
+            gpt3_metric = "rouge"
+        elif gpt3_metric == 'meteor':
+            self.gpt3_score_keys = ["lexical/meteor"]
+        elif gpt3_metric == 'bleu':
+            self.gpt3_score_keys = ["lexical/bleu"]
         else:
             raise NotImplementedError
-        self.gpt3_metric = MetricRegistry.get(gpt3_metric, {})
+        self.gpt3_metric = MetricRegistry.get(gpt3_metric, args)
         # rewards for t5:
+        args = {}
         if t5_metric == "rouge":
-            self.t5_score_keys = ["lexical/rouge_rouge1", "lexical/rouge_rouge2"]
+            self.t5_score_keys = ["lexical/rouge_rouge1", "lexical/rouge_rouge2", "lexical/rouge_rougeL"]
         elif t5_metric == "hint_hit":
             self.t5_score_keys = ["keyword/hint_hit"]
-        elif t5_metric == 'hint_bleu':
-            self.t5_score_keys = ["keyword/hint_bleu"]
         else:
             raise NotImplementedError
         self.t5_metric = MetricRegistry.get(t5_metric, {})
@@ -222,8 +234,8 @@ class RewardSummarizationWithHint(RewardFunction):
             print(t5_gen_text)
             
             # reward for t5
-            if self.t5_coef > 0:
-                if self.t5_metric_type in ["rouge", "hint_bleu"]:
+            if self.t5_coef != 0:
+                if self.t5_metric_type == "rouge":
                     metric_dict = self.t5_metric.compute(None, [t5_gen_text], [references])
                     t5_reward = [metric_dict[k][1] for k in self.t5_score_keys]
                     t5_reward = np.mean(t5_reward)
@@ -235,41 +247,45 @@ class RewardSummarizationWithHint(RewardFunction):
             else: # avoid calculation if not used
                 t5_reward = 0.
             
-            # generate multiple outputs with hint
-            gpt3_input_text = self.hint_prompt.replace("[[QUESTION]]", t5_input_text)
-            gpt3_input_text = gpt3_input_text.replace("[[HINT]]", t5_gen_text)
-            gpt3_hint_gen_texts = RewardSummarizationWithHint.gpt3_hint_generation(
-                self.gpt3, gpt3_input_text, self.temperature, self.max_tokens, self.num_seqs, self.top_p, self.stop_words)
-            gpt3_hint_gen_texts = RewardSummarizationWithHint.generation_selection(self.selection_strategy, gpt3_hint_gen_texts)
             # reward for gpt3
-            gpt3_rewards = []
-            for i, gpt3_hint_gen_text in enumerate(gpt3_hint_gen_texts):
-                metric_dict = self.gpt3_metric.compute(None, [gpt3_hint_gen_text], [references])
-                gpt3_reward = [metric_dict[k][1] for k in self.gpt3_score_keys]
-                gpt3_reward = np.mean(gpt3_reward)
-                gpt3_rewards.append(gpt3_reward)
-            gpt3_reward = np.mean(gpt3_rewards)
-            
-            if self.use_baseline:
-                # gpt3 generation
-                gpt3_input_text = self.prompt.replace("[[QUESTION]]", t5_input_text)
-                # only generate one without hint as baseline
-                gpt3_gen_texts = RewardSummarizationWithHint.gpt3_hint_generation(
+            if self.gpt3_coef != 0:
+                # generate multiple outputs with hint
+                gpt3_input_text = self.hint_prompt.replace("[[QUESTION]]", t5_input_text)
+                gpt3_input_text = gpt3_input_text.replace("[[HINT]]", t5_gen_text)
+                gpt3_hint_gen_texts = RewardSummarizationWithHint.gpt3_hint_generation(
                     self.gpt3, gpt3_input_text, self.temperature, self.max_tokens, self.num_seqs, self.top_p, self.stop_words)
-                gpt3_gen_texts = RewardSummarizationWithHint.generation_selection(self.selection_strategy, gpt3_gen_texts)
-                # baseline reward for gpt3
-                baseline_gpt3_rewards = []
-                for i, gpt3_gen_text in enumerate(gpt3_gen_texts):
-                    metric_dict = self.gpt3_metric.compute(None, [gpt3_gen_text], [references])
-                    baseline_gpt3_reward = [metric_dict[k][1] for k in self.gpt3_score_keys]
-                    baseline_gpt3_reward = np.mean(baseline_gpt3_reward)
-                    baseline_gpt3_rewards.append(baseline_gpt3_reward)
-                baseline_gpt3_reward = np.mean(baseline_gpt3_rewards)
-                # the improvement over baseline as reward
-                gpt3_reward = 10*(gpt3_reward - baseline_gpt3_reward)
-            
-            # add reward for gpt3 and t5
-            reward = 10*gpt3_reward + self.t5_coef*t5_reward
+                gpt3_hint_gen_texts = RewardSummarizationWithHint.generation_selection(self.selection_strategy, gpt3_hint_gen_texts)
+                # reward for gpt3
+                gpt3_rewards = []
+                for i, gpt3_hint_gen_text in enumerate(gpt3_hint_gen_texts):
+                    metric_dict = self.gpt3_metric.compute(None, [gpt3_hint_gen_text], [references])
+                    gpt3_reward = [metric_dict[k][1] for k in self.gpt3_score_keys]
+                    gpt3_reward = np.mean(gpt3_reward)
+                    gpt3_rewards.append(gpt3_reward)
+                gpt3_reward = np.mean(gpt3_rewards)
+                
+                if self.use_baseline:
+                    # gpt3 generation
+                    gpt3_input_text = self.prompt.replace("[[QUESTION]]", t5_input_text)
+                    # only generate one without hint as baseline
+                    gpt3_gen_texts = RewardSummarizationWithHint.gpt3_hint_generation(
+                        self.gpt3, gpt3_input_text, self.temperature, self.max_tokens, self.num_seqs, self.top_p, self.stop_words)
+                    gpt3_gen_texts = RewardSummarizationWithHint.generation_selection(self.selection_strategy, gpt3_gen_texts)
+                    # baseline reward for gpt3
+                    baseline_gpt3_rewards = []
+                    for i, gpt3_gen_text in enumerate(gpt3_gen_texts):
+                        metric_dict = self.gpt3_metric.compute(None, [gpt3_gen_text], [references])
+                        baseline_gpt3_reward = [metric_dict[k][1] for k in self.gpt3_score_keys]
+                        baseline_gpt3_reward = np.mean(baseline_gpt3_reward)
+                        baseline_gpt3_rewards.append(baseline_gpt3_reward)
+                    baseline_gpt3_reward = np.mean(baseline_gpt3_rewards)
+                    # the improvement over baseline as reward
+                    gpt3_reward = 10*(gpt3_reward - baseline_gpt3_reward)
+            else:
+                gpt3_reward = 0.
+
+            # combine reward for gpt3 and t5
+            reward = self.gpt3_coef*gpt3_reward + self.t5_coef*t5_reward
             print(f"gpt3: {gpt3_reward}, t5: {t5_reward}, total: {reward}")
             return reward
 
@@ -277,28 +293,31 @@ class RewardSummarizationWithHint(RewardFunction):
         elif self.step_reward_coef > 0. and action == self.split_token_id:
             t5_gen_text = current_observation.context_text.lower()
             reference = current_observation.target_or_reference_texts[0].lower()
+            references = current_observation.target_or_reference_texts
             t5_gen_hints = t5_gen_text.split(self.split_token)[:-1]
             t5_gen_hint = t5_gen_hints[-1].strip()
             history_gen_hints = self.split_token.join(t5_gen_hints[:-1]) if len(t5_gen_hints) >= 2 else ""
-            # none generation
-            if t5_gen_hint == "":
-                t5_reward = -self.t5_neg_coef
-            # meaningless generation
-            elif t5_gen_hint in avoid_keywords:
-                t5_reward = -self.t5_neg_coef
-            # repeated generation
-            elif t5_gen_hint in history_gen_hints:
-                t5_reward = -self.t5_neg_coef
-            # evaluate generation
-            elif self.t5_metric_type == "hint_hit":
-                if t5_gen_hint in reference:
-                    t5_reward = 1.
+            if self.t5_metric_type == 'hint_hit':
+                # none generation
+                if t5_gen_hint == "":
+                    t5_reward = self.t5_neg_coef
+                # meaningless generation
+                elif t5_gen_hint in avoid_keywords:
+                    t5_reward = self.t5_neg_coef
+                # repeated generation
+                elif t5_gen_hint in history_gen_hints:
+                    t5_reward = self.t5_neg_coef
+                # evaluate generation
+                elif self.t5_metric_type == "hint_hit":
+                    if t5_gen_hint in reference:
+                        t5_reward = self.t5_pos_coef
+                    else:
+                        t5_reward = self.t5_neg_coef
                 else:
-                    t5_reward = -self.t5_neg_coef
+                    raise NotImplementedError
             else:
                 raise NotImplementedError
-            # coef for step reward
-            t5_reward *= self.step_reward_coef
+            t5_reward = self.step_reward_coef*t5_reward     
             return t5_reward
         
         return 0
@@ -318,6 +337,7 @@ class RewardMultiWOZWithHint(RewardFunction):
                  top_p: float,
                  stop_words: List[str],
                  gpt3_metric: str,
+                 gpt3_coef: float,
                  use_baseline: bool,
                  prompt_path: str,
                  hint_prompt_path: str,
@@ -333,6 +353,7 @@ class RewardMultiWOZWithHint(RewardFunction):
         self.gpt3 = GPT3(model=gpt3_model, interval=interval, timeout=timeout, exp=exp, patience=patience)
         # arguments for t5 reward
         self.t5_coef = t5_coef
+        self.gpt3_coef = gpt3_coef
         # arguments for gpt3 inference
         self.temperature = temperature
         self.max_tokens = max_tokens
@@ -402,7 +423,7 @@ class RewardMultiWOZWithHint(RewardFunction):
             dialog_with_hint += self.user_prefix + " " + current_user + "\n" + self.system_hint_prefix.replace("[[HINT]]", t5_gen_text)
 
             # reward for t5
-            if self.t5_coef > 0:
+            if self.t5_coef != 0:
                 if self.t5_metric_type == "dialog_act_accuracy":
                     metric_dict = self.t5_metric.compute(None, [t5_gen_text], [[da_output]])
                     t5_reward = [metric_dict[k][1] for k in self.t5_score_keys]
@@ -412,40 +433,43 @@ class RewardMultiWOZWithHint(RewardFunction):
             else: # avoid calculation if not used
                 t5_reward = 0.
             
-            # generate multiple outputs with hint
-            gpt3_input_text = self.hint_prompt.replace("[[DIALOG]]", dialog_with_hint)
-            gpt3_hint_gen_texts = RewardSummarizationWithHint.gpt3_hint_generation(
-                self.gpt3, gpt3_input_text, self.temperature, self.max_tokens, self.num_seqs, self.top_p, self.stop_words)
-            gpt3_hint_gen_texts = RewardSummarizationWithHint.generation_selection(self.selection_strategy, gpt3_hint_gen_texts)
-            # reward for gpt3
-            gpt3_rewards = []
-            for i, gpt3_hint_gen_text in enumerate(gpt3_hint_gen_texts):
-                metric_dict = self.gpt3_metric.compute(None, [gpt3_hint_gen_text], [references])
-                gpt3_reward = [metric_dict[k][1] for k in self.gpt3_score_keys]
-                gpt3_reward = np.mean(gpt3_reward)
-                gpt3_rewards.append(gpt3_reward)
-            gpt3_reward = np.mean(gpt3_rewards)
-            
-            if self.use_baseline:
-                # gpt3 generation
-                gpt3_input_text = self.prompt.replace("[[DIALOG]]", dialog)
-                # only generate one without hint as baseline
-                gpt3_gen_texts = RewardSummarizationWithHint.gpt3_hint_generation(
+            if self.gpt3_coef != 0:
+                # generate multiple outputs with hint
+                gpt3_input_text = self.hint_prompt.replace("[[DIALOG]]", dialog_with_hint)
+                gpt3_hint_gen_texts = RewardSummarizationWithHint.gpt3_hint_generation(
                     self.gpt3, gpt3_input_text, self.temperature, self.max_tokens, self.num_seqs, self.top_p, self.stop_words)
-                gpt3_gen_texts = RewardSummarizationWithHint.generation_selection(self.selection_strategy, gpt3_gen_texts)
-                # baseline reward for gpt3
-                baseline_gpt3_rewards = []
-                for i, gpt3_gen_text in enumerate(gpt3_gen_texts):
-                    metric_dict = self.gpt3_metric.compute(None, [gpt3_gen_text], [references])
-                    baseline_gpt3_reward = [metric_dict[k][1] for k in self.gpt3_score_keys]
-                    baseline_gpt3_reward = np.mean(baseline_gpt3_reward)
-                    baseline_gpt3_rewards.append(baseline_gpt3_reward)
-                baseline_gpt3_reward = np.mean(baseline_gpt3_rewards)
-                # the improvement over baseline as reward
-                gpt3_reward = 10*(gpt3_reward - baseline_gpt3_reward)
+                gpt3_hint_gen_texts = RewardSummarizationWithHint.generation_selection(self.selection_strategy, gpt3_hint_gen_texts)
+                # reward for gpt3
+                gpt3_rewards = []
+                for i, gpt3_hint_gen_text in enumerate(gpt3_hint_gen_texts):
+                    metric_dict = self.gpt3_metric.compute(None, [gpt3_hint_gen_text], [references])
+                    gpt3_reward = [metric_dict[k][1] for k in self.gpt3_score_keys]
+                    gpt3_reward = np.mean(gpt3_reward)
+                    gpt3_rewards.append(gpt3_reward)
+                gpt3_reward = np.mean(gpt3_rewards)
+                
+                if self.use_baseline:
+                    # gpt3 generation
+                    gpt3_input_text = self.prompt.replace("[[DIALOG]]", dialog)
+                    # only generate one without hint as baseline
+                    gpt3_gen_texts = RewardSummarizationWithHint.gpt3_hint_generation(
+                        self.gpt3, gpt3_input_text, self.temperature, self.max_tokens, self.num_seqs, self.top_p, self.stop_words)
+                    gpt3_gen_texts = RewardSummarizationWithHint.generation_selection(self.selection_strategy, gpt3_gen_texts)
+                    # baseline reward for gpt3
+                    baseline_gpt3_rewards = []
+                    for i, gpt3_gen_text in enumerate(gpt3_gen_texts):
+                        metric_dict = self.gpt3_metric.compute(None, [gpt3_gen_text], [references])
+                        baseline_gpt3_reward = [metric_dict[k][1] for k in self.gpt3_score_keys]
+                        baseline_gpt3_reward = np.mean(baseline_gpt3_reward)
+                        baseline_gpt3_rewards.append(baseline_gpt3_reward)
+                    baseline_gpt3_reward = np.mean(baseline_gpt3_rewards)
+                    # the improvement over baseline as reward
+                    gpt3_reward = 10*(gpt3_reward - baseline_gpt3_reward)
+            else:
+                gpt3_reward = 0.
             
             # add reward for gpt3 and t5
-            reward = 10*gpt3_reward + self.t5_coef*t5_reward
+            reward = self.gpt3_coef*gpt3_reward + self.t5_coef*t5_reward
             print(f"gpt3: {gpt3_reward}, t5: {t5_reward}, total: {reward}")
             return reward
 

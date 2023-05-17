@@ -139,8 +139,11 @@ cluster_utils/
 deprecated/
 rl4lms/envs/text_generation/my_utils.py
 rl4lms_exps/
-sft4lms/ckpt
-sft4lms/data/cnndm
-sft4lms/data/multiwoz
+sft4lms/ckpt/
+sft4lms/data/cnndm/
+sft4lms/data/multiwoz/
 *.tar.gz
-flan-t5-*
+flan-t5-*/
+pics/
+utils/
+api_keys.sh

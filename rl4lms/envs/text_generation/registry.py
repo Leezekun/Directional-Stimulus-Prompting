@@ -44,7 +44,6 @@ from rl4lms.envs.text_generation.metric import (
     TERMetric,
     chrFmetric,
     HintHitSummarization,
-    HintBLEUSummarization,
     HintDialogActAccuracyMultiWOZ,
     MultiWOZMetric,
 )
@@ -161,7 +160,6 @@ class MetricRegistry:
     _registry = {
         "summarization_with_hint": SummarizationWithHintMetric, # my metric for summarization with hint
         "hint_hit": HintHitSummarization,
-        "hint_bleu": HintBLEUSummarization,
         "multiwoz_with_hint": MultiWOZWithHintMetric, # my metric for multiwoz with hint (dialog act)
         "multiwoz": MultiWOZMetric,
         "dialog_act_accuracy": HintDialogActAccuracyMultiWOZ,

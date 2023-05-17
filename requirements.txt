@@ -14,6 +14,7 @@ torch==1.11.0
 torchvision==0.12.0
 tqdm==4.64.0
 transformers==4.18.0
+huggingface-hub==0.11.1
 wandb==0.12.15
 jsonlines==3.0.0
 rouge_score==0.0.4

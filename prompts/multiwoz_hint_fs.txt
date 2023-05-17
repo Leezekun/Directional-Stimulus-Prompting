@@ -66,7 +66,7 @@ Assistant([general] [bye]): have a great day ! bye .
 
 Conversation:
 User: i want to find place -s to go in the centre of town that are park type attractions .
-Assistant(attraction] [inform] price name [offerbook]): i think that you will like [value_name] . it is [value_price] , may i book it for you ?
+Assistant([attraction] [inform] price name [offerbook]): i think that you will like [value_name] . it is [value_price] , may i book it for you ?
 User: yes , that sounds good ! please provide me with the postcode .
 Assistant([attraction] [nobook] [inform] postcode): i ' m sorry , we are n't able to book tickets for this attraction , but their postcode [value_postcode] cb21jf , and i can provide their address and phone if you like ?
 User: no . that is all i need . i would like help finding a cheap guest house though .

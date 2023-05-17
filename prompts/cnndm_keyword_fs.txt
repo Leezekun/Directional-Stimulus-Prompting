@@ -1,0 +1,13 @@
+Extract the keywords from the sentences.
+
+Sentence: A top official with President Dilma Rousseff's ruling party is arrested in bribery probe . Joao Vaccari Neto denies wrongdoing, says all donations were legal . Hundreds of thousands of Brazilians have protested against Rousseff in the last few months .
+Keywords: arrest; ruling Workers' Party; bribery investigation; President Dilma Rousseff; Joao Vaccari Neto; denied any wrongdoing; donations; Brazilian; protest.
+
+Sentence: Calls for Lee Wan-koo to resign began after South Korean tycoon Sung Woan-jong was found hanging from a tree in Seoul . Sung, who was under investigation for fraud and bribery, left a note listing names and amounts of cash given to top officials.
+Keywords: Lee Wan-koo; resign, South Korean tycoon; Sung Woan-jong; investigation; fraud; bribery; notes.
+
+Sentence: Mother must complete "treatment" before she can be extradited, Maryland police say . Mom told police son was with her in Maryland, but he was found Friday alone in woods . Victim being treated for malnutrition, dehydration; mother faces host of charges after extradition .
+Keywords: Mother; treatment; extradited; Maryland police; son; woods; malnutrition; dehydration; charge; extradition.
+
+Sentence: [[QUESTION]]
+Keywords:

@@ -167,12 +167,14 @@ class RougeMetric(BaseMetric):
 
 
 class BERTScoreMetric(BaseMetric):
-    def __init__(self, language: str) -> None:
+    def __init__(self, language: str = "en", metric_value: str = "f1") -> None:
         super().__init__()
         self._metric = load_metric("bertscore")
         self._language = language
+        self._metric_value = metric_value # assert metric_value in ['precision', 'recall', 'f1']
         # since models are loaded heavily on cuda:0, use the last one to avoid memory
         self._last_gpu = f"cuda:{torch.cuda.device_count() - 1}"
+        
 
     def compute(
         self,
@@ -190,7 +192,7 @@ class BERTScoreMetric(BaseMetric):
                 lang=self._language,
                 device=self._last_gpu,
             )
-            bert_scores = metric_results["f1"]
+            bert_scores = metric_results[self._metric_value]
             corpus_level_score = np.mean(bert_scores)
             metric_dict = {"semantic/bert_score": (bert_scores, corpus_level_score)}
             return metric_dict
@@ -733,72 +735,6 @@ class HintHitSummarization(BaseMetric):
         return metric_dict
 
 
-class HintBLEUSummarization(BaseMetric):
-    def __init__(self, split: str = ";", ref_num: float = 8.0) -> None:
-        super().__init__()
-        self.SPLIT = split
-        from string2string.edit_distance import EditDistAlgs
-        self.algs_unit = EditDistAlgs()
-        self.ref_num = ref_num # default as 8
-
-    def compute(
-        self,
-        prompt_texts: List[str],
-        generated_texts: List[str],
-        reference_texts: List[List[str]],
-        meta_infos: List[Dict[str, Any]] = None,
-        model: PreTrainedModel = None,
-        split_name: str = None,
-    ) -> Tuple[List[float], float]:
-
-        """
-        BLEU = BP * (1/4 * P1 + 1/4 * P2 + 1/4 * P3 + 1/4 * P3)
-        BP = 1 if num > ref_num else exp(1 - num / ref_num), ref_num = 6 by default.
-        """
-        assert len(generated_texts) == len(reference_texts)
-        hint_bleus, hint_nums = [], []
-        for i in range(len(generated_texts)):
-            label = reference_texts[i][0].strip().lower()
-            pred = generated_texts[i].strip().lower()
-            pred = pred[:-1] if pred[-1] == "." else pred
-            pred = pred.split(self.SPLIT)
-            # only keep the hints with at most 4 words
-            pred_ngrams = [[], [], [], []]
-            for p in pred:
-                p = p.strip()
-                p_ = p.split()
-                p_len = len(p_)
-                if p_len <= 4 and p_len >= 1:
-                    pred_ngrams[p_len-1].append(p)
-
-            # calculate precisions for 4, 3, 2, 1-gram hints
-            hit_pred, hit_preds = [], [[], [], [], []]
-            for j in [3, 2, 1, 0]:
-                for p in pred_ngrams[j]:
-                    if p not in " ".join(hit_pred) and p in label:
-                        hit_pred.append(p)
-                        hit_preds[j].append(p)
-
-            # calculate bleu
-            n = len(pred)
-            b = self.ref_num
-            # brievity penalty
-            bp = 1 if n >=b else np.exp(1-float(b/n))
-            # bp = np.exp(1-float(b/n))
-            precisions = [len(hit_preds[k]) / len(pred_ngrams[k]) if len(pred_ngrams[k]) > 0 else 0 for k in range(4)]
-            weights = [0.25, 0.25, 0.25, 0.25]
-            bleu = np.mean(np.array(precisions)*np.array(weights)) * bp
-            bleu *= 100
-            hint_bleus.append(bleu)
-            hint_nums.append(n)
-
-        metric_dict = {
-            "keyword/hint_bleu": (hint_bleus, np.mean(hint_bleus)),
-            "keyword/hint_num": (hint_nums, np.mean(hint_nums))
-        }
-        return metric_dict
-
-
 class HintDialogActAccuracyMultiWOZ(BaseMetric):
     def __init__(self, all_domain: list = ["[taxi]", "[police]", "[hospital]", "[hotel]",
                                            "[attraction]", "[train]", "[restaurant]"],
@@ -941,12 +877,23 @@ class MultiWOZMetric(BaseMetric):
 
 
 if __name__ == "__main__":
-    prompt_texts = [""]
-    gen_texts = ["Hello; here; are you here.", "bar foobar; volley bear; are you there; i am fine; ball; football."]
-    reference_texts = [[["Hello there general kenobi are you here ? I am planning going to the supermarket ."]], [["foo bar foobar volley bear are you there my bear"]]]
-    metric = HintBLEUSummarization()
-    print(metric.compute(prompt_texts, gen_texts, reference_texts))
-
+    # prompt_texts = [""]
+    # gen_texts = [
+    #         "Two CNN Heroes, Anuradha Koirala and Pushpa Basnet, have been struggling in the aftermath of the earthquake in Kathmandu, Nepal . Koirala rescues victims of sex trafficking and has a rehabilitation center in Kathmandu that is home to 425 young women and girls . Basnet, whose Early Childhood Development Center provides a home and education to children whose parents are incarcerated, cares for 45 children who have been forced to evacuate their residence.",
+    #         "Two CNN Heroes are among the earthquake survivors in Kathmandu, Nepal . Anuradha Koirala, who rescues victims of sex trafficking, has a rehabilitation center in Kathmandu that is home to 425 young women and girls . While her primary facility seems structurally unharmed, all of the children have been sleeping outdoors because of aftershocks, followed by a second earthquake on May 12.",
+    #         "CNN Heroes Anuradha Koirala and Pushpa Basnet are among the earthquake survivors in Kathmandu, Nepal . Koirala's rehabilitation center in Kathmandu is home to 425 young women and girls, while Basnet's Early Childhood Development Center provides a home and education to children whose parents are incarcerated . After the earthquake, both centers have been damaged and their inhabitants are struggling to survive ."
+    #     ]
+    reference_texts = [["Nicholas Salvador accused of beheading Palmira Silva in her garden .\n\
+                        He pleaded not guilty on grounds of insanity at London's Old Bailey today .\nAlso pleaded not guilty to a separate assault charge, citing same reason .\
+                        \nMrs Silva was found dead in a garden in Edmonton in September 2014 ."]]
+    # gen_texts = [
+    #         "A would-be cage fighter has pleaded not guilty by reason of insanity to charges of beheading a great-grandmother in her garden in Edmonton, London , and a separate assault charge. Nicholas Salvador, known as Fat Nick, is accused of killing Palmira Silva, 82, with a machete . He was escorted from the dock after his brief appearance at the Old Bailey ."        
+    #         ]
+    gen_texts = [
+            "insanity"        
+            ]
+    prompt_texts = ["A would-be cage fighter accused of beheading a great-grandmother in her garden has pleaded not guilty by reason of insanity. Appearing briefly at London's Old Bailey, Nicholas Salvador, nicknamed 'Fat Nick', spoke only to issue his plea. Dressed in black and flanked by three security guards, he also pleaded not guilty to a separate assault charge, giving the same reason. Nicholas Salvador (right) is accused of killing Palmira Silva (left) in her garden in September last year . The widow ran a successful cafe, Silva's Cafe, in Church Street, Edmonton - where members of the public laid floral tributes after her murder on September 4 last year . Salvador, 25, is accused of killing Palmira Silva, 82, with a machete. She was found dead in a garden in Nightingale Road, Edmonton, north London, in September 2014. The suburban street became the scene of a major police operation after officers were called to apprehend the alleged killer. Happy family: Palmira and her late husband Domenico with their now grown-up children, Celestina and Rino . Mrs Silva moved to London from her native southern Italy with her husband Domenico six decades ago . Several of the victim's relatives, including her daughter Celestina, were in the courtroom to witness the plea. Mrs Silva moved to London from her native southern Italy with her husband Domenico six decades ago. They married and had a daughter, Celestina, and a son, Rino. The widow ran a successful cafe, Silva's Cafe, in Church Street, Edmonton - where members of the public laid floral tributes after her murder on September 4 last year. Mr Silva died in 2008 but the family continued the business. Mrs Silva had only recently stopped working full time at the cafe that she and her son ran. Salvador, an only child, is thought to have left home at the age of around 13 or 14 after arriving in the UK from Nigeria with his parents. Police were forced to stage a dramatic evacuation operation to save neighbours during the incident, and an armed squad Tasered the suspect. The house in the busy street where the Italian widow's body was found was the scene of a major police operation after officers were called initially to reports that a man had beheaded an animal. Scotland Yard said that its officers distracted a man after he was seen going through back gardens in Nightingale Road while they evacuated people from nearby homes. Judge Hilliard set a trial date of June 22 at the Old Bailey and Salvador was then escorted out of the dock. Sorry we are not currently accepting comments on this article."]
+    
     # metric = RougeMetric()
     # print(metric.compute(prompt_texts, gen_texts, reference_texts))
 
@@ -959,8 +906,8 @@ if __name__ == "__main__":
     # metric = chrFmetric()
     # print(metric.compute(prompt_texts, gen_texts, reference_texts))
 
-    # metric = BERTScoreMetric(language="en")
-    # print(metric.compute(prompt_texts, gen_texts, reference_texts))
+    metric = BERTScoreMetric(language="en", metric_value="precision")
+    print(metric.compute(prompt_texts, gen_texts, reference_texts))
 
     # metric = BLEUMetric()
     # print(metric.compute(prompt_texts, gen_texts, reference_texts))

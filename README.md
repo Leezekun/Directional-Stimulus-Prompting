@@ -49,7 +49,7 @@ Optionally, coreNLP libraries are required for certain metric computations (eg. 
 
 ## Setup OPENAI ACCESS KEY
 You should setup your openai access key to call the api. 
-`export OPENAI_ACCESS_KEY='XXXXXXXX'`
+`export OPENAI_API_KEY='XXXXXXXX'`
 
 
 ---
@@ -108,13 +108,13 @@ For our experiments, we customize the datasets of CNN/Daily Mail and MultiWOZ, w
   reward_fn:
   id: summarization_with_hint
   args:
-    gpt3_model: 'code-davinci-002' 
+    gpt3_model: 'gpt-3.5-turbo' 
     interval: 0.5 # arguments for exponential backoff
     timeout: 20.0
     exp: 2.0
     patience: 10
     temperature: 0.7 # arguments for the LLM's inference
-    max_tokens: 100
+    max_tokens: 128
     num_seqs: 4
     top_p: 1.0
     stop_words: ["Article:", "Q:",  "A:"]
@@ -132,7 +132,7 @@ For our experiments, we customize the datasets of CNN/Daily Mail and MultiWOZ, w
     split_token_id: 117 # token id of ";" for t5
   ```
   
-Note that we conducted the experiments using Codex (**code-davinci-002**), which has not been supported by OPENAI since March 23rd, 2023. However, you can [apply for either the Codex model access or a research subsidy](https://openai.com/form/researcher-access-program).
+Note that we conducted the experiments using Codex (**gpt-3.5-turbo**), which has not been supported by OPENAI since March 23rd, 2023. However, you can [apply for either the Codex model access or a research subsidy](https://openai.com/form/researcher-access-program).
 You can also try other models by changing the `gpt3_model`.
 
 - **Environment**: Configures a gym-style text generation [environment](https://github.com/allenai/RL4LMs/blob/main/rl4lms/envs/text_generation/env.py) which simulates MDP episodes. Rollouts are generated using train samples from dataset consisting of input and reference texts.
@@ -208,13 +208,13 @@ Further configuration settings include:
     metrics:
       - id: summarization_with_hint
         args: 
-          gpt3_model: 'code-davinci-002'
+          gpt3_model: 'gpt-3.5-turbo'
           interval: 0.5
           timeout: 20.0
           exp: 2
           patience: 10
           temperature: 0.7
-          max_tokens: 100
+          max_tokens: 128
           num_seqs: 3
           top_p: 1.0
           stop_words: ["Article:", "Q:",  "A:"]
@@ -241,10 +241,6 @@ Further configuration settings include:
             - id: "hint_hit"
               args: 
                 split: ";"
-            - id: "hint_bleu"
-              args: 
-                split: ";"
-                ref_num: 8.0
     generation_kwargs: # for the trained policy LM T5
       min_length: 8
       max_new_tokens: 64

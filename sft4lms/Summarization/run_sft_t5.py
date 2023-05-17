@@ -109,9 +109,9 @@ def fine_tune_hf(
     train_dataset = Dataset.from_dict(train_data)
     val_dataset = Dataset.from_dict(val_data)
     test_dataset = Dataset.from_dict(test_data)
-    train_dataset = train_dataset.map(remove_columns=["context", "phrases"])
-    val_dataset = val_dataset.map(remove_columns=["context", "phrases"])
-    test_dataset = test_dataset.map(remove_columns=["context", "phrases"])
+    train_dataset = train_dataset.map(remove_columns=["phrases"])
+    val_dataset = val_dataset.map(remove_columns=["phrases"])
+    test_dataset = test_dataset.map(remove_columns=["phrases"])
     # tokenize the dataset
     if task == 'summarization':
         train_dataset = train_dataset.map(preprocess_function_for_summarization, batched=True, remove_columns=["target", "article", "summary"])
@@ -172,7 +172,6 @@ def fine_tune_hf(
             label_key = convert_label_to_key(label)
             label = val_test_summary_mapping[label_key].lower()
 
-            # only keep the hints with at most 4 words
             hit_pred = []
             for p in pred:
                 p = p.strip()
@@ -202,16 +201,14 @@ def fine_tune_hf(
     if task == 'summarization':
         compute_metrics = compute_rouge_metrics
         best_metric = "rouge1"
-        hf_path = f"{model_name}-summarization-{dataset_name}_{n_train}-ep{epochs}"
     elif task == 'extraction':
         compute_metrics = compute_hit_metrics
-        best_metric = "hint_precision"
-        # best_metric = "loss"
-        hf_path = f"{model_name}-extraction-{dataset_name}_{n_train}-{extraction_source}-{best_metric}-ep{epochs}"
+        best_metric = "loss"
 
     # arguments
     training_args = Seq2SeqTrainingArguments(
-    output_dir=output_dir if not push_to_hub else hf_path, # output directory
+    output_dir=output_dir, # output directory
+    # output_dir=output_dir if not push_to_hub else hf_path, # output directory
     num_train_epochs=epochs, # total number of training epochs
     per_device_train_batch_size=train_batch_size,  # batch size per device during training
     per_device_eval_batch_size=eval_batch_size,   # batch size for evaluation
@@ -227,9 +224,9 @@ def fine_tune_hf(
     seed=seed,
     push_to_hub=push_to_hub,
     predict_with_generate=True, # for evaluation metrics
-    load_best_model_at_end=True,
-    metric_for_best_model=best_metric,
-    remove_unused_columns=False
+    # load_best_model_at_end=True,
+    # metric_for_best_model=best_metric,
+    remove_unused_columns=True
     )
 
     data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer,model=model)
@@ -242,7 +239,7 @@ def fine_tune_hf(
     eval_dataset=val_dataset,
     data_collator=data_collator,
     compute_metrics=compute_metrics,
-    callbacks = [EarlyStoppingCallback(early_stopping_patience=early_stopping_patience)]    
+    # callbacks = [EarlyStoppingCallback(early_stopping_patience=early_stopping_patience)]    
     )
     
     if do_train:
@@ -268,7 +265,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     # arguments for dataset
-    parser.add_argument('--dataset', type=str, default='cnndm', choices=['cnndm', 'xsum']) #
+    parser.add_argument('--dataset', type=str, default='cnndm', choices=['cnndm']) #
 
     parser.add_argument('--n_train', type=int, default=2000) #
     parser.add_argument('--n_val', type=int, default=500) #
@@ -320,9 +317,9 @@ def main():
     """prepare for training""" 
     if args.output_dir is None:
         if task == 'summarization':
-            output_dir = f"./sft4lms/ckpt/{dataset}_{n_train}/summarization/{args.model}"
+            output_dir = f"./sft4lms/ckpt/{dataset}_{n_train}/summarization/{args.model}/"
         elif task == 'extraction':
-            output_dir = f"./sft4lms/ckpt/{dataset}_{n_train}/{extraction_mode}-{extraction_source}/{args.model}"
+            output_dir = f"./sft4lms/ckpt/{dataset}_{n_train}/{extraction_mode}-{extraction_source}/{args.model}-ep{args.epochs}"
     else:
         output_dir = args.output_dir
 
